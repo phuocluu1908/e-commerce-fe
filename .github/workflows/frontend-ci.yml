@@ -136,17 +136,18 @@ jobs:
           ADMIN_MF_URL: ${{ secrets.ADMIN_MF_URL }}
         run: |
           set -euo pipefail
-          : "${HOST_FRONTEND_PORT:=8088}"
-          : "${CART_MF_URL:=http://cart-mf:5173}"
-          : "${ACCOUNT_MF_URL:=http://account-mf:5174}"
-          : "${ADMIN_MF_URL:=http://admin-mf:5175}"
+          export HOST_FRONTEND_PORT="${HOST_FRONTEND_PORT:-8088}"
+          export CART_MF_URL="${CART_MF_URL:-http://cart-mf:5173}"
+          export ACCOUNT_MF_URL="${ACCOUNT_MF_URL:-http://account-mf:5174}"
+          export ADMIN_MF_URL="${ADMIN_MF_URL:-http://admin-mf:5175}"
 
-          python - <<'PY' > ssm-commands.json
+          python3 - <<'PY' > ssm-commands.json
           import json
           import os
 
           commands = [
             "sudo docker network create ecommerce-net || true",
+            "aws ecr get-login-password --region ap-southeast-1 | sudo docker login --username AWS --password-stdin 861638088375.dkr.ecr.ap-southeast-1.amazonaws.com",
             f"sudo docker pull {os.environ['IMAGE_URI']}",
             "sudo docker rm -f storefront-shell || true",
             (
