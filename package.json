@@ -25,6 +25,7 @@
     "@swc-node/register": "^1.11.1",
     "@swc/core": "^1.15.32",
     "@tailwindcss/postcss": "^4.2.4",
+    "@typescript-eslint/parser": "^8.59.1",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/ui": "~4.1.0",
     "eslint": "~8.57.0",
