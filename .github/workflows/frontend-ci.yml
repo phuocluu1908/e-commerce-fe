@@ -135,14 +135,41 @@ jobs:
           ACCOUNT_MF_URL: ${{ secrets.ACCOUNT_MF_URL }}
           ADMIN_MF_URL: ${{ secrets.ADMIN_MF_URL }}
         run: |
+          set -euo pipefail
           : "${HOST_FRONTEND_PORT:=8088}"
+          : "${CART_MF_URL:=http://cart-mf:5173}"
+          : "${ACCOUNT_MF_URL:=http://account-mf:5174}"
+          : "${ADMIN_MF_URL:=http://admin-mf:5175}"
+
+          python - <<'PY' > ssm-commands.json
+          import json
+          import os
+
+          commands = [
+            "sudo docker network create ecommerce-net || true",
+            f"sudo docker pull {os.environ['IMAGE_URI']}",
+            "sudo docker rm -f storefront-shell || true",
+            (
+              "sudo docker run -d --name storefront-shell --restart unless-stopped "
+              "--network ecommerce-net "
+              f"-p {os.environ['HOST_FRONTEND_PORT']}:3000 "
+              f"-e CART_MF_URL={os.environ['CART_MF_URL']} "
+              f"-e ACCOUNT_MF_URL={os.environ['ACCOUNT_MF_URL']} "
+              f"-e ADMIN_MF_URL={os.environ['ADMIN_MF_URL']} "
+              f"{os.environ['IMAGE_URI']}"
+            ),
+            "sudo docker ps --filter name=storefront-shell --format '{{.Names}} {{.Status}}'",
+          ]
+
+          print(json.dumps({"commands": commands}))
+          PY
 
           COMMAND_ID=$(aws ssm send-command \
             --region "$AWS_REGION" \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy storefront-shell from GitHub Actions" \
-            --parameters commands="sudo docker network create ecommerce-net || true,sudo docker pull $IMAGE_URI,sudo docker rm -f storefront-shell || true,sudo docker run -d --name storefront-shell --restart unless-stopped --network ecommerce-net -p $HOST_FRONTEND_PORT:3000 -e CART_MF_URL=${CART_MF_URL:-http://cart-mf:5173} -e ACCOUNT_MF_URL=${ACCOUNT_MF_URL:-http://account-mf:5174} -e ADMIN_MF_URL=${ADMIN_MF_URL:-http://admin-mf:5175} $IMAGE_URI,sudo docker ps --filter name=storefront-shell --format '{{.Names}} {{.Status}}'" \
+            --parameters file://ssm-commands.json \
             --query "Command.CommandId" \
             --output text)
 
