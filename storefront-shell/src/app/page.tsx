@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <main className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">E-Commerce Storefront 123</h1>
+        <h1 className="text-4xl font-bold mb-4">E-Commerce Storefront 456</h1>
         <p className="text-gray-600">Welcome to the main shell</p>
       </div>
     </main>
