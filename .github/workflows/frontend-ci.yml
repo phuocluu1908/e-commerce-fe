@@ -163,6 +163,9 @@ jobs:
           commands = [
             "set -euo pipefail",
             "sudo docker network create ecommerce-net || true",
+            "sudo docker container prune -f || true",
+            "sudo docker image prune -af || true",
+            "sudo docker builder prune -af || true",
             "aws ecr get-login-password --region ap-southeast-1 | sudo docker login --username AWS --password-stdin 861638088375.dkr.ecr.ap-southeast-1.amazonaws.com",
             f"sudo docker pull {image_uri}",
             "sudo docker rm -f storefront-shell || true",
