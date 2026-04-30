@@ -5,14 +5,37 @@ on:
     branches:
       - main
       - master
+    paths:
+      - '.github/workflows/frontend-ci.yml'
+      - 'storefront-shell/**'
+      - 'catalog-mf/**'
+      - 'cart-mf/**'
+      - 'account-mf/**'
+      - 'admin-mf/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'nx.json'
   pull_request:
     branches:
       - main
       - master
+    paths:
+      - '.github/workflows/frontend-ci.yml'
+      - 'storefront-shell/**'
+      - 'catalog-mf/**'
+      - 'cart-mf/**'
+      - 'account-mf/**'
+      - 'admin-mf/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'nx.json'
   workflow_dispatch:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: frontend-ci-${{ github.ref }}
@@ -23,10 +46,14 @@ jobs:
     name: Lint and Build Frontend Apps
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      storefront_changed: ${{ steps.detect-storefront.outputs.storefront_changed }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -43,21 +70,35 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Set Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
       - name: Verify Nx projects
         run: pnpm nx show projects
 
-      - name: Lint apps
-        run: pnpm nx run-many --target=lint --projects=storefront-shell,catalog-mf,cart-mf,account-mf,admin-mf --parallel=3
+      - name: Lint affected projects
+        run: pnpm nx affected --target=lint --base="$NX_BASE" --head="$NX_HEAD" --parallel=3
 
-      - name: Build apps
-        run: pnpm nx run-many --target=build --projects=storefront-shell,catalog-mf,cart-mf,account-mf,admin-mf --parallel=3
+      - name: Build affected projects
+        run: pnpm nx affected --target=build --base="$NX_BASE" --head="$NX_HEAD" --parallel=3
+
+      - name: Detect storefront-shell changes
+        id: detect-storefront
+        run: |
+          set -euo pipefail
+          AFFECTED=$(pnpm nx show projects --affected --base="$NX_BASE" --head="$NX_HEAD")
+          if echo "$AFFECTED" | tr ' ' '\n' | grep -qx 'storefront-shell'; then
+            echo "storefront_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "storefront_changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
   deploy-storefront-shell:
     name: Deploy Storefront Shell To EC2
     runs-on: ubuntu-latest
     needs: lint-and-build
     timeout-minutes: 30
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && needs.lint-and-build.outputs.storefront_changed == 'true'
 
     steps:
       - name: Checkout
@@ -66,8 +107,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::861638088375:role/github-actions-deploy-role
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -82,6 +122,8 @@ jobs:
         run: |
           docker build -f storefront-shell/Dockerfile -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" storefront-shell
           docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker tag "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
           echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_ENV"
 
       - name: Deploy on EC2 via SSM
@@ -100,7 +142,7 @@ jobs:
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy storefront-shell from GitHub Actions" \
-            --parameters commands="sudo docker pull $IMAGE_URI,sudo docker rm -f storefront-shell || true,sudo docker run -d --name storefront-shell --restart unless-stopped -p $HOST_FRONTEND_PORT:3000 -e CART_MF_URL=${CART_MF_URL:-http://localhost:5173} -e ACCOUNT_MF_URL=${ACCOUNT_MF_URL:-http://localhost:5174} -e ADMIN_MF_URL=${ADMIN_MF_URL:-http://localhost:5175} $IMAGE_URI" \
+            --parameters commands="sudo docker network create ecommerce-net || true,sudo docker pull $IMAGE_URI,sudo docker rm -f storefront-shell || true,sudo docker run -d --name storefront-shell --restart unless-stopped --network ecommerce-net -p $HOST_FRONTEND_PORT:3000 -e CART_MF_URL=${CART_MF_URL:-http://cart-mf:5173} -e ACCOUNT_MF_URL=${ACCOUNT_MF_URL:-http://account-mf:5174} -e ADMIN_MF_URL=${ADMIN_MF_URL:-http://admin-mf:5175} $IMAGE_URI,sudo docker ps --filter name=storefront-shell --format '{{.Names}} {{.Status}}'" \
             --query "Command.CommandId" \
             --output text)
 
