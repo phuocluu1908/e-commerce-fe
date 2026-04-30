@@ -10,7 +10,8 @@
     "dev:catalog-mf": "nx run catalog-mf:dev",
     "dev:cart-mf": "nx run cart-mf:dev",
     "dev:account-mf": "nx run account-mf:dev",
-    "dev:admin-mf": "nx run admin-mf:dev"
+    "dev:admin-mf": "nx run admin-mf:dev",
+    "start": "nx run storefront-shell:dev"
   },
   "keywords": [],
   "author": "",
