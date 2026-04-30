@@ -86,8 +86,16 @@ jobs:
         id: detect-storefront
         run: |
           set -euo pipefail
+          # Force deploy on manual trigger
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "storefront_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           AFFECTED=$(pnpm nx show projects --affected --base="$NX_BASE" --head="$NX_HEAD")
-          if echo "$AFFECTED" | tr ' ' '\n' | grep -qx 'storefront-shell'; then
+          # Also force deploy if the workflow file itself changed
+          CHANGED_FILES=$(git diff --name-only "$NX_BASE" "$NX_HEAD" 2>/dev/null || true)
+          if echo "$AFFECTED" | tr ' ' '\n' | grep -qx 'storefront-shell' || \
+             echo "$CHANGED_FILES" | grep -q '.github/workflows/frontend-ci.yml'; then
             echo "storefront_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "storefront_changed=false" >> "$GITHUB_OUTPUT"
@@ -98,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint-and-build
     timeout-minutes: 30
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && needs.lint-and-build.outputs.storefront_changed == 'true'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && needs.lint-and-build.outputs.storefront_changed == 'true'
 
     steps:
       - name: Checkout
