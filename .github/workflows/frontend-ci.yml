@@ -152,22 +152,32 @@ jobs:
           python3 - <<'PY' > ssm-commands.json
           import json
           import os
+          import shlex
+
+          image_uri = shlex.quote(os.environ['IMAGE_URI'])
+          host_frontend_port = shlex.quote(os.environ['HOST_FRONTEND_PORT'])
+          cart_mf_url = shlex.quote(os.environ['CART_MF_URL'])
+          account_mf_url = shlex.quote(os.environ['ACCOUNT_MF_URL'])
+          admin_mf_url = shlex.quote(os.environ['ADMIN_MF_URL'])
 
           commands = [
+            "set -euo pipefail",
             "sudo docker network create ecommerce-net || true",
             "aws ecr get-login-password --region ap-southeast-1 | sudo docker login --username AWS --password-stdin 861638088375.dkr.ecr.ap-southeast-1.amazonaws.com",
-            f"sudo docker pull {os.environ['IMAGE_URI']}",
+            f"sudo docker pull {image_uri}",
             "sudo docker rm -f storefront-shell || true",
             (
               "sudo docker run -d --name storefront-shell --restart unless-stopped "
               "--network ecommerce-net "
-              f"-p {os.environ['HOST_FRONTEND_PORT']}:3000 "
-              f"-e CART_MF_URL={os.environ['CART_MF_URL']} "
-              f"-e ACCOUNT_MF_URL={os.environ['ACCOUNT_MF_URL']} "
-              f"-e ADMIN_MF_URL={os.environ['ADMIN_MF_URL']} "
-              f"{os.environ['IMAGE_URI']}"
+              f"-p {host_frontend_port}:3000 "
+              f"-e CART_MF_URL={cart_mf_url} "
+              f"-e ACCOUNT_MF_URL={account_mf_url} "
+              f"-e ADMIN_MF_URL={admin_mf_url} "
+              f"{image_uri}"
             ),
-            "sudo docker ps --filter name=storefront-shell --format '{{.Names}} {{.Status}}'",
+            "sleep 5",
+            "sudo docker ps --filter name=storefront-shell --format '{{.Names}} {{.Status}}' | grep -q '^storefront-shell '",
+            "curl -fsS --max-time 10 http://localhost:3000 >/dev/null || curl -fsS --max-time 10 http://localhost:8088 >/dev/null",
           ]
 
           print(json.dumps({"commands": commands}))
