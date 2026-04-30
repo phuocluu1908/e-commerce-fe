@@ -1,0 +1,7 @@
+packages:
+  - '.'
+  - 'storefront-shell'
+  - 'catalog-mf'
+  - 'cart-mf'
+  - 'account-mf'
+  - 'admin-mf'

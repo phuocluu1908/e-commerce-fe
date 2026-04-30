@@ -1,0 +1,43 @@
+{
+  "name": "e-commerce",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "nx": "nx",
+    "nx:projects": "nx show projects",
+    "dev:storefront-shell": "nx run storefront-shell:dev",
+    "dev:catalog-mf": "nx run catalog-mf:dev",
+    "dev:cart-mf": "nx run cart-mf:dev",
+    "dev:account-mf": "nx run account-mf:dev",
+    "dev:admin-mf": "nx run admin-mf:dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.2",
+  "devDependencies": {
+    "@nx/eslint": "22.7.1",
+    "@nx/jest": "22.7.1",
+    "@nx/next": "22.7.1",
+    "@nx/vite": "22.7.1",
+    "@nx/web": "22.7.1",
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.15.32",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/ui": "~4.1.0",
+    "eslint": "~8.57.0",
+    "jest": "^30.0.2",
+    "jiti": "2.4.2",
+    "nx": "22.7.1",
+    "vite": "^8.0.0",
+    "vitest": "~4.1.0"
+  },
+  "nx": {},
+  "dependencies": {
+    "next": "~16.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

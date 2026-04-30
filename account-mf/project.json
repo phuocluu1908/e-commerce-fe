@@ -1,0 +1,38 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "account-mf",
+  "projectType": "application",
+  "root": "account-mf",
+  "sourceRoot": "account-mf/src",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "account-mf",
+        "command": "vite --port 5174 --strictPort"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "account-mf",
+        "command": "tsc -b && vite build"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "account-mf",
+        "command": "eslint ."
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "account-mf",
+        "command": "vite preview --port 4174 --strictPort"
+      }
+    }
+  },
+  "tags": ["scope:frontend", "type:microfrontend", "framework:react"]
+}

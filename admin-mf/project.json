@@ -1,0 +1,38 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "admin-mf",
+  "projectType": "application",
+  "root": "admin-mf",
+  "sourceRoot": "admin-mf/src",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "admin-mf",
+        "command": "vite --port 5175 --strictPort"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "admin-mf",
+        "command": "tsc -b && vite build"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "admin-mf",
+        "command": "eslint ."
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "admin-mf",
+        "command": "vite preview --port 4175 --strictPort"
+      }
+    }
+  },
+  "tags": ["scope:frontend", "type:microfrontend", "framework:react"]
+}

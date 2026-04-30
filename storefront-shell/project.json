@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "storefront-shell",
+  "projectType": "application",
+  "root": "storefront-shell",
+  "sourceRoot": "storefront-shell/src",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "storefront-shell",
+        "command": "pnpm dev"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "storefront-shell",
+        "command": "pnpm build"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "storefront-shell",
+        "command": "pnpm lint"
+      }
+    }
+  },
+  "tags": ["scope:frontend", "type:host", "framework:next"]
+}

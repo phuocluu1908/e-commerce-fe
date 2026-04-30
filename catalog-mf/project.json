@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "catalog-mf",
+  "projectType": "application",
+  "root": "catalog-mf",
+  "sourceRoot": "catalog-mf/src",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "catalog-mf",
+        "command": "pnpm dev"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "catalog-mf",
+        "command": "pnpm build"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "catalog-mf",
+        "command": "pnpm lint"
+      }
+    }
+  },
+  "tags": ["scope:frontend", "type:microfrontend", "framework:next"]
+}
